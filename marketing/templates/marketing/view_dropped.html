@@ -1,0 +1,59 @@
+{% extends 'authentication/base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-bullhorn"></i> Marketing</h5>
+      <a href="{% url 'marketing_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="{% url 'marketing_job_drop' %}"><i class="fas fa-plus-circle"></i> Job Drop</a>
+      <a href="{% url 'marketing_my_dropped' %}" class="active"><i class="fas fa-list"></i> My Dropped Jobs</a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <div class="col-md-10 p-4">
+      <h2 class="mb-4">My Dropped Jobs</h2>
+
+      <div class="card">
+        <div class="card-body">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Job ID</th>
+                <th>Topic</th>
+                <th>Word Count</th>
+                <th>Deadline</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in jobs %}
+              <tr>
+                <td>{{ job.job_id }}</td>
+                <td>{{ job.topic|default:"—"|truncatewords:12 }}</td>
+                <td>{{ job.word_count }}</td>
+                <td>{{ job.expected_deadline|date:"d M Y, H:i" }}</td>
+                <td class="d-flex gap-2">
+                  {% if request.user.role in 'admin super_admin' or request.user.is_superuser %}
+                    <a class="btn btn-sm btn-primary" href="{% url 'marketing_job_edit' job.id %}">Edit</a>
+                    <form method="post" action="{% url 'marketing_job_delete' job.id %}">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                    </form>
+                  {% else %}
+                    <button class="btn btn-sm btn-outline-secondary" disabled>Edit (Admin)</button>
+                    <button class="btn btn-sm btn-outline-secondary" disabled>Delete (Admin)</button>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center">No dropped jobs</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

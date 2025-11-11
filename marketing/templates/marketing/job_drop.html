@@ -1,0 +1,99 @@
+{% extends 'authentication/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-bullhorn"></i> Marketing</h5>
+      <a href="{% url 'marketing_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="{% url 'marketing_job_drop' %}" class="active"><i class="fas fa-plus-circle"></i> Job Drop</a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <div class="col-md-10 p-4">
+      <h2 class="mb-4">Create New Job</h2>
+
+      <div class="card">
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Job ID (Optional)</label>
+                <input
+                  type="text"
+                  name="job_id"
+                  class="form-control"
+                  placeholder="e.g., JOB-ABC12345"
+                >
+                <small class="text-muted">
+                  Leave blank to auto-generate. Must be unique.
+                </small>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Word Count <span class="text-danger">*</span></label>
+                <input type="number" name="word_count" class="form-control" required>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Topic (Optional)</label>
+                <textarea name="topic" class="form-control" rows="3"></textarea>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Writing Style (Optional)</label>
+                <input type="text" name="writing_style" class="form-control">
+                <div class="mt-3">
+                  <label class="form-label">Referencing Style (Optional)</label>
+                  <input type="text" name="referencing_style" class="form-control">
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Instruction <span class="text-danger">*</span></label>
+              <textarea name="instruction" class="form-control" rows="5" required></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Expected Deadline <span class="text-danger">*</span></label>
+                <input type="datetime-local" name="expected_deadline" class="form-control" required>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Strict Deadline <span class="text-danger">*</span></label>
+                <input type="datetime-local" name="strict_deadline" class="form-control" required>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Value <span class="text-danger">*</span></label>
+                <input type="number" step="0.01" name="value" class="form-control" required>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Attachment (Optional)</label>
+                <input type="file" name="attachment" class="form-control">
+              </div>
+            </div>
+
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-paper-plane"></i> Submit Job
+              </button>
+              <a href="{% url 'marketing_dashboard' %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

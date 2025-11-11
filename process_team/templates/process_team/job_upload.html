@@ -1,0 +1,75 @@
+{% extends 'authentication/base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h3>Upload Artifacts — {{ job.get_masked_job_id }}</h3>
+  <p class="text-muted mb-4">{{ job.topic }}</p>
+
+  <div class="row">
+    <!-- AI/Plag section -->
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">AI / Plagiarism Stage</div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="upload_type" value="ai_plag">
+            <div class="mb-3">
+              <label class="form-label">Final File (Writer)</label>
+              <input type="file" name="final_file" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">AI Report</label>
+              <input type="file" name="ai_report" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Plagiarism Report</label>
+              <input type="file" name="plag_report" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Software Evidence</label>
+              <input type="file" name="software" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">Save AI/Plag Files</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decoration section -->
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">Decoration and Finalisation</div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="upload_type" value="decoration">
+            <div class="mb-3">
+              <label class="form-label">Final Deliverable</label>
+              <input type="file" name="final_file" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">AI Report</label>
+              <input type="file" name="ai_report" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Plagiarism Report</label>
+              <input type="file" name="plag_report" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Software Evidence</label>
+              <input type="file" name="software" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Decorated File (optional)</label>
+              <input type="file" name="decorated_file" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-success">Upload and Complete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a href="{% url 'process_team_dashboard' %}" class="btn btn-secondary">Back to dashboard</a>
+</div>
+{% endblock %}

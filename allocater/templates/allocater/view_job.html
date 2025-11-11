@@ -1,0 +1,185 @@
+{% extends 'authentication/base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-tasks"></i> Allocater</h5>
+      <a href="{% url 'allocater_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="{% url 'allocater_notifications' %}"><i class="fas fa-bell"></i> Notifications</a>
+      <a href="{% url 'allocater_profile' %}"><i class="fas fa-user"></i> Profile</a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <div class="col-md-10 p-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Job Details: {{ job.job_id }}</h2>
+        <a href="{% url 'allocater_dashboard' %}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0"><i class="fas fa-info-circle"></i> Job Information</h5>
+            </div>
+            <div class="card-body">
+              <div class="row mb-3">
+                <div class="col-md-6"><strong>Job ID:</strong><p>{{ job.job_id }}</p></div>
+                <div class="col-md-6"><strong>Created By:</strong><p>{{ job.created_by.first_name|default:job.created_by.username }}</p></div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-12"><strong>Topic:</strong><p>{{ job.topic|default:"Not specified" }}</p></div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6"><strong>Word Count:</strong><p>{{ job.word_count }}</p></div>
+                <div class="col-md-6"><strong>Type:</strong><p>{{ job.job_type|default:"Not specified" }}</p></div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6"><strong>Expected Deadline:</strong><p>{{ job.expected_deadline|date:"d M Y, h:i A" }}</p></div>
+                <div class="col-md-6"><strong>Strict Deadline:</strong><p>{{ job.strict_deadline|date:"d M Y, h:i A" }}</p></div>
+              </div>
+
+              {% if job.allocated_to %}
+              <div class="row mb-3">
+                <div class="col-md-6"><strong>Start Time (for writer):</strong><p>{{ job.start_time|date:"d M Y, h:i A"|default:"Not set" }}</p></div>
+                <div class="col-md-6"><strong>End Time (for writer):</strong><p>{{ job.end_time|date:"d M Y, h:i A"|default:"Not set" }}</p></div>
+              </div>
+              {% endif %}
+
+              <div class="row mb-3">
+                <div class="col-md-12"><strong>Instructions:</strong><p>{{ job.instructions|default:"No instructions provided" }}</p></div>
+              </div>
+
+              {% if job.attachment %}
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <strong>Attachment:</strong><br>
+                  <a href="{{ job.attachment.url }}" target="_blank" class="btn btn-sm btn-info">
+                    <i class="fas fa-download"></i> Download Attachment
+                  </a>
+                </div>
+              </div>
+              {% endif %}
+
+              {% if job.status_note %}
+              <div class="row mb-3">
+                <div class="col-md-12"><strong>Status Note:</strong><p class="text-muted">{{ job.status_note }}</p></div>
+              </div>
+              {% endif %}
+
+              <div class="row"><div class="col-md-12"><strong>Created At:</strong><p>{{ job.created_at|date:"d M Y, h:i A" }}</p></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+              <h5 class="mb-0"><i class="fas fa-chart-line"></i> Status</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <strong>Writer Status:</strong>
+                <p>
+                  {% if job.writer_status == 'open' %}
+                    <span class="badge bg-primary">Open</span>
+                  {% elif job.writer_status == 'in_progress' %}
+                    <span class="badge bg-info">In Progress</span>
+                  {% elif job.writer_status == 'closed' %}
+                    <span class="badge bg-dark">Closed</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Pending</span>
+                  {% endif %}
+                </p>
+              </div>
+
+              <div class="mb-3">
+                <strong>Process Team Status:</strong>
+                <p>
+                  {% if job.process_team_status == 'pending' %}
+                    <span class="badge bg-warning">Pending</span>
+                  {% elif job.process_team_status == 'in_progress' %}
+                    <span class="badge bg-info">In Progress</span>
+                  {% elif job.process_team_status == 'completed' %}
+                    <span class="badge bg-success">Completed</span>
+                  {% elif job.process_team_status == 'closed' %}
+                    <span class="badge bg-dark">Closed</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Not Assigned</span>
+                  {% endif %}
+                </p>
+              </div>
+
+              <div class="mb-3">
+                <strong>Overall Status:</strong>
+                <p>
+                  {% if job.status == 'drop' %}
+                    <span class="badge bg-secondary">Drop</span>
+                  {% elif job.status == 'allocated' %}
+                    <span class="badge bg-success">Allocated</span>
+                  {% elif job.status == 'query' %}
+                    <span class="badge bg-warning">Query</span>
+                  {% elif job.status == 'hold' %}
+                    <span class="badge bg-warning">Hold</span>
+                  {% elif job.status == 'cancel' %}
+                    <span class="badge bg-danger">Cancelled</span>
+                  {% elif job.status == 'completed' %}
+                    <span class="badge bg-success">Completed</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ job.status }}</span>
+                  {% endif %}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header bg-success text-white">
+              <h5 class="mb-0"><i class="fas fa-users"></i> Assignments</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <strong>Assigned Writer:</strong>
+                <p>
+                  {% if job.allocated_to %}
+                    {{ job.allocated_to.first_name|default:job.allocated_to.username }}
+                    <br><small class="text-muted">{{ job.allocated_to.email }}</small>
+                  {% else %}
+                    <span class="text-muted">Not assigned</span>
+                  {% endif %}
+                </p>
+              </div>
+
+              <div class="mb-3">
+                <strong>Process Team Member:</strong>
+                <p>
+                  {% if job.process_team_member %}
+                    {{ job.process_team_member.first_name|default:job.process_team_member.username }}
+                    <br><small class="text-muted">{{ job.process_team_member.email }}</small>
+                  {% else %}
+                    <span class="text-muted">Not assigned</span>
+                  {% endif %}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  .sidebar { background-color: #2c3e50; min-height: 100vh; padding: 20px 0; }
+  .sidebar a { color: #ecf0f1; text-decoration: none; padding: 15px 20px; display: block; transition: background-color 0.3s; }
+  .sidebar a:hover { background-color: #34495e; }
+  .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .card-header { font-weight: 600; }
+</style>
+{% endblock %}

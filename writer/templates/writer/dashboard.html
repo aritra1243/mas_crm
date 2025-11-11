@@ -1,0 +1,233 @@
+{% extends 'authentication/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-pen"></i> Writer</h5>
+      <a href="{% url 'writer_home' %}">
+        <i class="fas fa-home"></i> Home
+      </a>
+      <a href="{% url 'writer_dashboard' %}" class="active">
+        <i class="fas fa-tachometer-alt"></i> Workboard
+      </a>
+      <a href="{% url 'writer_notifications' %}">
+        <i class="fas fa-bell"></i> Notifications
+        {% if unread_count > 0 %}
+          <span class="badge bg-danger rounded-pill ms-2">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{% url 'writer_profile' %}">
+        <i class="fas fa-user"></i> Profile
+      </a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <!-- Main -->
+    <div class="col-md-10 p-4">
+      <h2 class="mb-4">Writer Dashboard</h2>
+
+      {% if current_job %}
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i> You have an active job. Complete it before the next one appears here.
+        </div>
+
+        <!-- Current Job Only -->
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5><i class="fas fa-briefcase"></i> Current Job: {{ current_job.get_masked_job_id }}</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <table class="table table-borderless mb-0">
+                  <tr>
+                    <th width="40%">Topic:</th>
+                    <td>{{ current_job.topic|default:"Not specified" }}</td>
+                  </tr>
+                  <tr>
+                    <th>Word Count:</th>
+                    <td><span class="badge bg-info">{{ current_job.word_count }}</span></td>
+                  </tr>
+                  <tr>
+                    <th>Referencing:</th>
+                    <td>{{ current_job.referencing_style|default:"Not specified" }}</td>
+                  </tr>
+                  <tr>
+                    <th>Writing Style:</th>
+                    <td>{{ current_job.writing_style|default:"Not specified" }}</td>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <table class="table table-borderless mb-0">
+                  <tr>
+                    <th width="40%">Started:</th>
+                    <td>
+                      {% if current_job.start_time %}
+                        {{ current_job.start_time|date:"d M Y, h:i A" }}
+                      {% else %}
+                        Not started
+                      {% endif %}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Strict Deadline:</th>
+                    <td><span class="badge bg-danger">{{ current_job.strict_deadline|date:"d M Y, h:i A" }}</span></td>
+                  </tr>
+                  <tr>
+                    <th>Status:</th>
+                    <td>
+                      {% if current_job.status == 'process' and current_job.writer_status == 'in_progress' %}
+                        <span class="badge bg-info">In Progress</span>
+                      {% elif current_job.status == 'allocated' %}
+                        <span class="badge bg-warning text-dark">Open</span>
+                      {% else %}
+                        <span class="badge bg-secondary">{{ current_job.get_status_display }}</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Attachment:</th>
+                    <td>
+                      {% if current_job.attachment %}
+                        <a href="{{ current_job.attachment.url }}" target="_blank" class="btn btn-sm btn-info">
+                          <i class="fas fa-download"></i> Download
+                        </a>
+                      {% else %}
+                        <span class="text-muted">No attachment</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <h6 class="mb-2"><strong>Instructions:</strong></h6>
+              <div class="p-3 bg-light rounded">
+                {{ current_job.instruction|linebreaks }}
+              </div>
+            </div>
+
+            <div class="text-center mt-4">
+              <a href="{% url 'writer_job_upload' current_job.id %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-upload"></i> Upload Work
+              </a>
+              <button class="btn btn-warning btn-lg ms-2" data-bs-toggle="modal" data-bs-target="#queryModal">
+                <i class="fas fa-question-circle"></i> Raise Query
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Query Modal -->
+        <div class="modal fade" id="queryModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Raise Query for {{ current_job.get_masked_job_id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <form method="POST" action="{% url 'writer_job_upload' current_job.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="query">
+                <div class="modal-body">
+                  <label class="form-label">Query Details</label>
+                  <textarea name="query_note" class="form-control" rows="5" required
+                            placeholder="Describe your query or clarification needed..."></textarea>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-warning">Submit Query</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {# Do not show any other jobs while one is active #}
+
+      {% else %}
+        <div class="alert alert-success">
+          <i class="fas fa-check-circle"></i> Great, no active job right now.
+        </div>
+
+        <!-- Optional history when no current job -->
+        <div class="card">
+          <div class="card-header">
+            <h5><i class="fas fa-history"></i> My Job History</h5>
+          </div>
+          <div class="card-body">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Job ID</th>
+                  <th>Topic</th>
+                  <th>Word Count</th>
+                  <th>Deadline</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for job in all_jobs %}
+                  <tr>
+                    <td>{{ job.get_masked_job_id }}</td>
+                    <td>{{ job.topic|truncatewords:8 }}</td>
+                    <td>{{ job.word_count }}</td>
+                    <td>{{ job.strict_deadline|date:"d M Y" }}</td>
+                    <td>
+                      {% if job.status == 'allocated' %}
+                        <span class="badge bg-warning text-dark">Open</span>
+                      {% elif job.status == 'process' %}
+                        <span class="badge bg-info">In Progress</span>
+                      {% elif job.status == 'completed' %}
+                        <span class="badge bg-success">Completed</span>
+                      {% else %}
+                        <span class="badge bg-secondary">{{ job.get_status_display }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if job.status == 'process' and job.writer_status == 'in_progress' %}
+                        <a href="{% url 'writer_job_upload' job.id %}" class="btn btn-sm btn-primary">
+                          <i class="fas fa-upload"></i> Upload
+                        </a>
+                      {% else %}
+                        <a href="{% url 'writer_open_job_detail' job.id %}" class="btn btn-sm btn-outline-secondary">
+                          <i class="fas fa-eye"></i> View
+                        </a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="6" class="text-center">No jobs to show</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .sidebar{
+    background-color:#2c3e50;
+    min-height:100vh;
+    padding:20px 0;
+  }
+  .sidebar a{
+    color:#ecf0f1;
+    text-decoration:none;
+    padding:12px 16px;
+    display:block;
+    transition:background-color .3s;
+  }
+  .sidebar a:hover,.sidebar a.active{background-color:#34495e;}
+  .card{border:none;}
+</style>
+{% endblock %}

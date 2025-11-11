@@ -1,0 +1,209 @@
+{% extends 'authentication/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-pen"></i> Writer</h5>
+      <a href="{% url 'writer_home' %}" class="{% if request.resolver_match.url_name == 'writer_home' %}active{% endif %}">
+        <i class="fas fa-home"></i> Home
+      </a>
+      <a href="{% url 'writer_dashboard' %}" class="{% if request.resolver_match.url_name == 'writer_dashboard' %}active{% endif %}">
+        <i class="fas fa-tachometer-alt"></i> Workboard
+      </a>
+      <a href="{% url 'writer_notifications' %}" class="{% if request.resolver_match.url_name == 'writer_notifications' %}active{% endif %}">
+        <i class="fas fa-bell"></i> Notifications
+        {% if unread_count > 0 %}
+        <span class="badge bg-danger rounded-pill ms-2">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{% url 'writer_profile' %}" class="{% if request.resolver_match.url_name == 'writer_profile' %}active{% endif %}">
+        <i class="fas fa-user"></i> Profile
+      </a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="col-md-10 p-4">
+      <div class="alert alert-success d-flex justify-content-between align-items-center">
+        <div>
+          <strong>Welcome {{ writer_name }}</strong>
+          <span class="ms-3 text-muted">Gmail: {{ writer_email }}</span>
+        </div>
+        <div>
+          <a href="{% url 'writer_notifications_read_all' %}" class="btn btn-sm btn-outline-dark">
+            <i class="fas fa-check-double"></i> Read all
+          </a>
+        </div>
+      </div>
+     
+      <!-- ✅ Stats Cards with Links -->
+      <div class="row mb-4">
+        <!-- Total Job -->
+        <div class="col-md-3">
+          <a href="{% url 'writer_home' %}" class="text-decoration-none">
+            <div class="card bg-dark text-white hover-card">
+              <div class="card-body text-center">
+                <h3>{{ counts.total_job }}</h3>
+                <p>Total Job</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <!-- Open Job -->
+        <div class="col-md-3">
+          <a href="{% url 'writer_dashboard' %}" class="text-decoration-none">
+            <div class="card bg-primary text-white hover-card">
+              <div class="card-body text-center">
+                <h3>{{ counts.open_job }}</h3>
+                <p>Open Job</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <!-- Complete Job -->
+        <div class="col-md-3">
+          <a href="{% url 'writer_complete_jobs' %}" class="text-decoration-none">
+            <div class="card bg-success text-white hover-card">
+              <div class="card-body text-center">
+                <h3>{{ counts.close_job }}</h3>
+                <p>Complete Job</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <!-- Open Issues -->
+        <div class="col-md-3">
+          <a href="{% url 'writer_open_issues' %}" class="text-decoration-none">
+            <div class="card bg-warning text-white hover-card">
+              <div class="card-body text-center">
+                <h3>{{ counts.open_issue }}</h3>
+                <p>Open Issues</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <!-- Close Issues -->
+        <div class="col-md-3 mt-3">
+          <a href="{% url 'writer_close_issues' %}" class="text-decoration-none">
+            <div class="card bg-info text-white hover-card">
+              <div class="card-body text-center">
+                <h3>{{ counts.close_issue }}</h3>
+                <p>Close Issue</p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      {% if newly_allocated %}
+      <div class="alert alert-info">
+        <i class="fas fa-bell"></i>
+        New jobs allocated:
+        {% for j in newly_allocated %}
+          <span class="badge bg-secondary ms-2">{{ j.job_id }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Open Job Table -->
+      <div class="card mb-4">
+        <div class="card-header"><h5><i class="fas fa-folder-open"></i> Open Job</h5></div>
+        <div class="card-body">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Job ID</th>
+                <th>Topic</th>
+                <th>Word Count</th>
+                <th>Strict Deadline</th>
+                <th>Current Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for j in open_jobs %}
+              <tr>
+                <td>{{ j.job_id }}</td>
+                <td>{{ j.topic|truncatewords:10 }}</td>
+                <td>{{ j.word_count }}</td>
+                <td><span class="badge bg-danger">{{ j.strict_deadline|date:"d M Y, h:i A" }}</span></td>
+                <td>
+                  {% if j.status == 'allocated' %}
+                    <span class="badge bg-warning">Open</span>
+                  {% elif j.status == 'process' %}
+                    <span class="badge bg-primary">In Progress</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ j.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a class="btn btn-sm btn-outline-primary" href="{% url 'writer_open_job_detail' j.id %}">View</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center">No open jobs</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Deadline popup modal -->
+<div class="modal fade" id="deadlineModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-hourglass-half"></i> Deadline alert</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="deadlineBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Okay</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ due_soon|json_script:"dueSoonData" }}
+
+<script>
+(function () {
+  const node = document.getElementById('dueSoonData');
+  let dueSoon = [];
+  if (node) {
+    try { dueSoon = JSON.parse(node.textContent); } catch (e) { dueSoon = []; }
+  }
+  if (Array.isArray(dueSoon) && dueSoon.length) {
+    const body = document.getElementById('deadlineBody');
+    let html = '<p>These jobs are close to closing time. Please wrap up soon.</p><ul>';
+    for (const d of dueSoon) {
+      const mins = Math.floor((d.seconds || 0) / 60);
+      const secs = Math.max(0, (d.seconds || 0) % 60);
+      html += `<li><strong>${d.job_id}</strong> - due in ${mins}m ${secs}s</li>`;
+    }
+    html += '</ul>';
+    body.innerHTML = html;
+    const modal = new bootstrap.Modal(document.getElementById('deadlineModal'));
+    modal.show();
+  }
+})();
+</script>
+
+<style>
+  .sidebar { background-color:#2c3e50; min-height:100vh; padding:20px 0; }
+  .sidebar a { color:#ecf0f1; text-decoration:none; padding:12px 16px; display:block; transition:background-color .3s; }
+  .sidebar a:hover, .sidebar a.active { background-color:#34495e; }
+  .hover-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+  .hover-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+</style>
+{% endblock %}

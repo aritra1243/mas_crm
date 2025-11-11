@@ -1,0 +1,169 @@
+<!-- ALLOCATER/TEMPLATES/ALLOCATER/ASSIGNED.HTML -->
+{% extends 'authentication/base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-tasks"></i> Allocater</h5>
+      <a href="{% url 'allocater_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="{% url 'allocater_notifications' %}"><i class="fas fa-bell"></i> Notifications{% if unread_count > 0 %} <span class="badge bg-danger">{{ unread_count }}</span>{% endif %}</a>
+      <a href="{% url 'allocater_profile' %}"><i class="fas fa-user"></i> Profile</a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <div class="col-md-10 p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Assigned Jobs</h2>
+        <a class="btn btn-secondary" href="{% url 'allocater_dashboard' %}"><i class="fas fa-arrow-left"></i> Back</a>
+      </div>
+
+      <div class="alert alert-success">Total Assigned: <strong>{{ total_assigned }}</strong></div>
+
+      <div class="card">
+        <div class="card-body">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Job ID</th>
+                <th>Writer</th>
+                <th>Process Member</th>
+                <th>Writer Status</th>
+                <th>Process Status</th>
+                <th>Strict Deadline</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for j in jobs %}
+              <tr>
+                <td>{{ j.job_id }}</td>
+                <td>{% if j.allocated_to %}{{ j.allocated_to.first_name|default:j.allocated_to.username }}{% else %}<span class="text-muted">Not assigned</span>{% endif %}</td>
+                <td>{% if j.process_team_member %}{{ j.process_team_member.first_name|default:j.process_team_member.username }}{% else %}<span class="text-muted">Not assigned</span>{% endif %}</td>
+                <td>{{ j.writer_status|title }}</td>
+                <td>{{ j.process_team_status|title }}</td>
+                <td>{{ j.strict_deadline|date:"d M, h:i A" }}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-primary manage-btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#allocateModal"
+                    data-job-id="{{ j.id }}"
+                    data-job-label="{{ j.job_id }}"
+                  >
+                    <i class="fas fa-user-plus"></i> Manage
+                  </button>
+                  <a class="btn btn-sm btn-info" href="{% url 'allocater_view_job' j.id %}"><i class="fas fa-eye"></i> View</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="7" class="text-center text-muted">No assigned jobs</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reusable Manage modal -->
+<div class="modal fade" id="allocateModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Manage Job: <span class="job-label"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="POST" action="{% url 'allocater_dashboard' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="hidden" name="job_id" value="">
+          <div class="mb-3">
+            <label class="form-label">Action</label>
+            <select name="action" class="form-select" id="actionSelect">
+              <option value="allocate_to_writer">Allocate to Writer</option>
+              <option value="allocate_to_process_team">Allocate to Process Team</option>
+              <option value="change_writer">Change Writer</option>
+              <option value="change_process_team">Change Process Team</option>
+              <option value="query">Query</option>
+              <option value="cancel">Cancel</option>
+              <option value="hold">Hold</option>
+            </select>
+          </div>
+
+          <div class="mb-3" id="writerSelectDiv">
+            <label class="form-label">Select Writer</label>
+            <select name="writer_id" class="form-select">
+              <option value="">Choose…</option>
+              {% for writer in writers %}
+                <option value="{{ writer.id }}">{{ writer.first_name|default:writer.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3" id="processTeamSelectDiv" style="display:none;">
+            <label class="form-label">Select Process Team Member</label>
+            <select name="process_team_id" class="form-select">
+              <option value="">Choose…</option>
+              {% for member in process_team_members %}
+                <option value="{{ member.id }}">{{ member.first_name|default:member.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Note (optional)</label>
+            <textarea name="status_note" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Submit</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var modalEl = document.getElementById('allocateModal');
+  var actionSelect = document.getElementById('actionSelect');
+  var writerSelectDiv = document.getElementById('writerSelectDiv');
+  var processTeamSelectDiv = document.getElementById('processTeamSelectDiv');
+
+  modalEl.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget;
+    if (!button) return;
+    modalEl.querySelector('input[name="job_id"]').value = button.getAttribute('data-job-id');
+    modalEl.querySelector('.modal-title .job-label').textContent = button.getAttribute('data-job-label');
+    actionSelect.value = 'allocate_to_writer';
+    writerSelectDiv.style.display = 'block';
+    processTeamSelectDiv.style.display = 'none';
+  });
+
+  document.querySelectorAll('.manage-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if (window.bootstrap) window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+  });
+
+  actionSelect.addEventListener('change', function() {
+    var action = this.value;
+    if (action === 'allocate_to_writer' || action === 'change_writer') {
+      writerSelectDiv.style.display = 'block';
+      processTeamSelectDiv.style.display = 'none';
+    } else if (action === 'allocate_to_process_team' || action === 'change_process_team') {
+      writerSelectDiv.style.display = 'none';
+      processTeamSelectDiv.style.display = 'block';
+    } else {
+      writerSelectDiv.style.display = 'none';
+      processTeamSelectDiv.style.display = 'none';
+    }
+  });
+});
+</script>
+{% endblock %}

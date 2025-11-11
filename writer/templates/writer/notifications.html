@@ -1,0 +1,97 @@
+{% extends 'authentication/base.html' %}
+{% load static %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar">
+            <h5 class="text-center mb-4"><i class="fas fa-pen"></i> Writer</h5>
+            <a href="{% url 'writer_home' %}" class="{% if request.resolver_match.url_name == 'writer_home' %}active{% endif %}">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="{% url 'writer_dashboard' %}" class="{% if request.resolver_match.url_name == 'writer_dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i> Workboard
+            </a>
+            <a href="{% url 'writer_notifications' %}" class="{% if request.resolver_match.url_name == 'writer_notifications' %}active{% endif %}">
+                <i class="fas fa-bell"></i> Notifications
+                {% if unread_count > 0 %}
+                <span class="badge bg-danger rounded-pill ms-2">{{ unread_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'writer_profile' %}" class="{% if request.resolver_match.url_name == 'writer_profile' %}active{% endif %}">
+                <i class="fas fa-user"></i> Profile
+            </a>
+            <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+        
+        <div class="col-md-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-bell"></i> Notifications</h2>
+                {% if unread_count > 0 %}
+                <a href="{% url 'writer_notifications_read_all' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-check-double"></i> Mark All as Read
+                </a>
+                {% endif %}
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Newly allocated</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if newly_allocated %}
+                                <ul class="list-group">
+                                    {% for job in newly_allocated %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center {% if not job.is_read %}bg-light border-primary{% endif %}">
+                                        <div>
+                                            <strong>{{ job.job_id }}</strong>
+                                            {% if not job.is_read %}
+                                            <span class="badge bg-danger ms-2">New</span>
+                                            {% endif %}
+                                            <br>
+                                            <small class="text-muted">{{ job.topic|truncatewords:8 }}</small>
+                                        </div>
+                                        <a href="{% url 'writer_open_job_detail' job.id %}" class="btn btn-sm btn-primary">View</a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted mb-0">No new allocations.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">Due within 10 minutes</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if due_soon %}
+                                <ul class="list-group">
+                                    {% for job in due_soon %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ job.job_id }}</strong>
+                                            <br>
+                                            <small class="text-danger">
+                                                <i class="fas fa-clock"></i> {{ job.minutes_left }} min remaining
+                                            </small>
+                                        </div>
+                                        <a href="{% url 'writer_job_upload' job.id %}" class="btn btn-sm btn-warning">Upload Now</a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted mb-0">Nothing urgent right now.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

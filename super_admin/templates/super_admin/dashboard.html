@@ -1,0 +1,72 @@
+{% extends 'authentication/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 sidebar">
+            <h5 class="text-center mb-4"><i class="fas fa-crown"></i> Super Admin</h5>
+            <a href="{% url 'super_admin_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{% url 'super_admin_pending' %}"><i class="fas fa-clock"></i> Pending Approvals</a>
+            <a href="{% url 'super_admin_roles' %}"><i class="fas fa-users-cog"></i> Manage Roles</a>
+            <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-10 p-4">
+            <h2 class="mb-4">Super Admin Dashboard</h2>
+            
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h3>{{ total_users }}</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h3>{{ pending_approvals }}</h3>
+                            <p>Pending Approvals</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h3>{{ total_jobs }}</h3>
+                            <p>Total Jobs</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>Role Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th>Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for role, count in role_distribution.items %}
+                            <tr>
+                                <td>{{ role|title }}</td>
+                                <td>{{ count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

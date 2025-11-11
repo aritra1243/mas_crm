@@ -1,0 +1,116 @@
+{# process_team/templates/process_team/notifications.html #}
+{% extends 'authentication/base.html' %}
+{% block content %}
+<div class="container-fluid pt-3 pb-5 process-bg">
+  <div class="row g-0">
+
+    <!-- Sidebar -->
+    <aside class="col-md-2 sidebar pe-0">
+      <div class="sidebar-inner">
+        <h5 class="text-center mb-4 text-white-50">
+          <i class="fas fa-cogs me-2"></i>Process Team
+        </h5>
+
+        <a href="{% url 'process_team_dashboard' %}">
+          <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+        </a>
+
+        <a href="{% url 'process_team_notifications' %}" class="active">
+          <i class="fas fa-bell me-2"></i>Notifications
+          {% if process_unread_count %}
+            <span class="badge rounded-pill bg-danger float-end">{{ process_unread_count }}</span>
+          {% endif %}
+        </a>
+
+        <a href="{% url 'process_team_profile' %}">
+          <i class="fas fa-user me-2"></i>Profile
+        </a>
+        <a href="{% url 'logout' %}">
+          <i class="fas fa-sign-out-alt me-2"></i>Logout
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="col-md-10 p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="page-title mb-0">Notifications</h2>
+        {% if process_unread_count %}
+        <form method="post" action="{% url 'process_team_mark_all_read' %}">
+          {% csrf_token %}
+          <button class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-check-double me-1"></i>Mark all read
+          </button>
+        </form>
+        {% endif %}
+      </div>
+
+      {% if due_soon %}
+      <div class="alert alert-warning shadow-sm">
+        <strong class="me-2">
+          <i class="fas fa-hourglass-half me-1"></i>Due soon
+        </strong>
+        <ul class="mb-0 ps-3">
+          {% for d in due_soon %}
+            <li><span class="fw-semibold">{{ d.masked_job_id }}</span> due in {{ d.seconds }} seconds</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table align-middle table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Time</th>
+                  <th>Job</th>
+                  <th>Message</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for n in notifications %}
+                <tr class="{% if not n.is_read %}table-warning-subtle{% endif %}">
+                  <td class="text-nowrap">{{ n.created_at|date:"d M Y, h:i A" }}</td>
+                  <td class="text-nowrap">
+                    {% if n.job %}{{ n.job.get_masked_job_id }}{% else %}-{% endif %}
+                  </td>
+                  <td class="w-100">{{ n.message }}</td>
+                  <td class="text-nowrap">
+                    {% if n.is_read %}
+                      <span class="badge bg-secondary">Read</span>
+                    {% else %}
+                      <span class="badge bg-success">New</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center py-4 text-muted">No notifications</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<style>
+  .process-bg {
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #6a89ff26, transparent),
+      radial-gradient(900px 600px at 100% 0, #19cc8e1f, transparent);
+  }
+  .sidebar { background:#1f2d3a; min-height:100vh; }
+  .sidebar-inner { padding: 20px 0; }
+  .sidebar a { color:#e8eef5; text-decoration:none; padding:12px 18px; display:block; }
+  .sidebar a.active, .sidebar a:hover { background:#2b3b4c; }
+  .page-title { font-weight:700; }
+  .table-warning-subtle { background:#fff6e0; }
+</style>
+{% endblock %}

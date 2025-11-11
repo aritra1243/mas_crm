@@ -1,0 +1,241 @@
+{% extends 'authentication/base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-cogs"></i> Process Team</h5>
+      <a href="{% url 'process_team_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="{% url 'process_team_notifications' %}">
+        <i class="fas fa-bell"></i> Notifications
+        {% if unread_count %}<span class="badge bg-danger">{{ unread_count }}</span>{% endif %}
+      </a>
+      <a href="{% url 'process_team_profile' %}" class="active"><i class="fas fa-user"></i> Profile</a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <div class="col-md-10 p-4">
+      <div class="profile-header mb-4">
+        <div class="d-flex align-items-center">
+          <div class="profile-avatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <div class="ms-3">
+            <h2 class="mb-1">{{ user.first_name }} {{ user.last_name }}</h2>
+            <p class="text-muted mb-0">Process Team Member</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Profile Information Card -->
+        <div class="col-lg-8 mx-auto mb-4">
+          <div class="card profile-card">
+            <div class="card-header">
+              <i class="fas fa-user-circle me-2"></i> Profile Information
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="info-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <p>{{ user.email }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-group">
+                    <label><i class="fas fa-user"></i> Username</label>
+                    <p>{{ user.username }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-group">
+                    <label><i class="fas fa-id-badge"></i> User ID (Assigned by Admin)</label>
+                    <p>{{ user.id }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-group">
+                    <label><i class="fas fa-building"></i> Organization ID</label>
+                    <p>{{ user.organization_id|default:"Not Assigned" }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-group">
+                    <label><i class="fas fa-calendar-plus"></i> Joining Date</label>
+                    <p>{{ user.date_joined|date:"d M Y, h:i A" }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-group">
+                    <label><i class="fas fa-hourglass-half"></i> Tenure</label>
+                    <p>{{ tenure }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mt-4">
+        <div class="alert alert-info d-inline-block">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Note:</strong> Profile information is managed by the system administrator and cannot be edited directly.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  body {
+    background: #f5f7fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .sidebar { 
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    min-height: 100vh; 
+    padding: 20px 0;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  }
+  
+  .sidebar h5 {
+    color: #ecf0f1;
+    font-weight: 600;
+    padding: 10px;
+    border-bottom: 2px solid #34495e;
+    margin-bottom: 20px;
+  }
+
+  .sidebar a { 
+    color: #ecf0f1; 
+    text-decoration: none; 
+    padding: 14px 20px; 
+    display: block;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+  }
+  
+  .sidebar a:hover { 
+    background: rgba(52, 73, 94, 0.5);
+    border-left: 3px solid #3498db;
+    padding-left: 25px;
+  }
+  
+  .sidebar a.active { 
+    background: #34495e;
+    border-left: 3px solid #3498db;
+    font-weight: 600;
+  }
+
+  .sidebar a i {
+    width: 20px;
+    margin-right: 10px;
+  }
+
+  .profile-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px;
+    border-radius: 15px;
+    color: white;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  }
+
+  .profile-avatar {
+    font-size: 80px;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .profile-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+  }
+
+  .profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
+
+  .profile-card .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    padding: 15px 20px;
+    border-bottom: none;
+    font-size: 16px;
+  }
+
+  .profile-card .card-body {
+    padding: 25px;
+  }
+
+  .info-group {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .info-group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .info-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .info-group label i {
+    margin-right: 8px;
+    color: #667eea;
+  }
+
+  .info-group p {
+    font-size: 16px;
+    color: #2c3e50;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .badge {
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 20px;
+  }
+
+  .alert-info {
+    background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+    border: none;
+    border-left: 4px solid #00acc1;
+    border-radius: 8px;
+    color: #006064;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      min-height: auto;
+    }
+    
+    .profile-avatar {
+      font-size: 60px;
+    }
+    
+    .profile-header h2 {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+{% endblock %}

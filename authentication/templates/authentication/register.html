@@ -1,0 +1,70 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Register - MAS {% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="col-md-6 col-lg-5">
+            <div class="card">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                        <h3 class="fw-bold">Create Account</h3>
+                        <p class="text-muted">Join MAS</p>
+                    </div>
+                    
+                    <form method="POST" action="{% url 'register' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">
+                                <i class="fas fa-user"></i> Full Name
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope"></i> Email Address
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone_number" class="form-label">
+                                <i class="fas fa-phone"></i> Phone Number
+                            </label>
+                            <input type="tel" class="form-control" id="phone_number" name="phone_number" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock"></i> Password
+                            </label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="confirm_password" class="form-label">
+                                <i class="fas fa-lock"></i> Confirm Password
+                            </label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="fas fa-user-plus"></i> Register
+                        </button>
+                        
+                        <div class="text-center">
+                            <p class="mb-0">Already have an account? 
+                                <a href="{% url 'login' %}" class="text-decoration-none">Login here</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

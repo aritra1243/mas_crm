@@ -1,0 +1,144 @@
+{% extends 'authentication/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-pen"></i> Writer</h5>
+      <a href="{% url 'writer_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <!-- Main -->
+    <div class="col-md-10 p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Upload Work · <span class="text-muted">{{ job.get_masked_job_id }}</span></h2>
+        <a href="{% url 'writer_dashboard' %}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+
+      <!-- Handoff summary -->
+      <div class="alert {% if job.process_team_member %}alert-success{% else %}alert-info{% endif %}">
+        {% if job.process_team_member %}
+          <i class="fas fa-user-check"></i>
+          After submission, this job will move to
+          <strong>{{ job.process_team_member.first_name|default:job.process_team_member.username }}</strong>
+          in the Process Team and its process status will start.
+        {% else %}
+          <i class="fas fa-users"></i>
+          No Process Team member is assigned yet. After submission, the job will be marked
+          <strong>Pending</strong> for processing. Process Team members and the allocator will be notified to assign someone.
+        {% endif %}
+      </div>
+
+      <!-- Job details -->
+      <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0"><i class="fas fa-info-circle"></i> Job Details</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <p><strong>Topic:</strong> {{ job.topic|default:"Not specified" }}</p>
+              <p><strong>Word Count:</strong> <span class="badge bg-info">{{ job.word_count }}</span></p>
+              <p><strong>Referencing:</strong> {{ job.referencing_style|default:"Not specified" }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Writing Style:</strong> {{ job.writing_style|default:"Not specified" }}</p>
+              <p><strong>Strict Deadline:</strong>
+                <span class="badge bg-danger">{{ job.strict_deadline|date:"d M Y, h:i A" }}</span>
+              </p>
+            </div>
+            <div class="col-12">
+              <strong>Instructions:</strong>
+              <div class="p-3 bg-light rounded mt-2">
+                {{ job.instruction|linebreaks }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload form -->
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="fas fa-cloud-upload-alt"></i> Upload Your Work</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data" id="uploadForm">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="upload">
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-file-alt"></i> Structure File</label>
+                <input type="file" name="structure_file" class="form-control" accept=".doc,.docx,.pdf,.txt,.md">
+                <small class="text-muted">Optional outline or structure.</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-file-word"></i> Final Copy <span class="text-danger">*</span></label>
+                <input type="file" name="final_copy" class="form-control" required accept=".doc,.docx,.pdf">
+                <small class="text-muted">The completed main document.</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-folder"></i> Software or Associated Files</label>
+                <input type="file" name="software_files" class="form-control" multiple>
+                <small class="text-muted">Any extra files, if applicable.</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-list-alt"></i> Final Copy Summary <span class="text-danger">*</span></label>
+                <textarea name="final_copy_summary" class="form-control" rows="5" required
+                          placeholder="Briefly describe what you completed and major sections covered."></textarea>
+              </div>
+            </div>
+
+            <div class="alert alert-warning mt-4">
+              <i class="fas fa-exclamation-triangle"></i>
+              Double-check the final copy and the summary before submitting.
+            </div>
+
+            <div class="text-center mt-3">
+              <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                <i class="fas fa-check-circle"></i> Submit Work
+              </button>
+              <a href="{% url 'writer_dashboard' %}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-arrow-left"></i> Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Client-side guard: require summary length > 10 and a final file
+  document.getElementById('uploadForm').addEventListener('submit', function (e) {
+    const summary = this.querySelector('textarea[name="final_copy_summary"]').value.trim();
+    const finalFile = this.querySelector('input[name="final_copy"]').files.length;
+    if (!finalFile) {
+      alert('Please attach the Final Copy file.');
+      e.preventDefault();
+      return;
+    }
+    if (summary.length < 10) {
+      alert('Please add a brief summary of at least 10 characters.');
+      e.preventDefault();
+    }
+  });
+</script>
+
+<style>
+  .sidebar { background-color:#2c3e50; min-height:100vh; padding:20px 0; }
+  .sidebar a { color:#ecf0f1; text-decoration:none; padding:12px 16px; display:block; transition:background-color .3s; }
+  .sidebar a:hover { background-color:#34495e; }
+  .card { box-shadow: 0 2px 4px rgba(0,0,0,.08); }
+</style>
+{% endblock %}

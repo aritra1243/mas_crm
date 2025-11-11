@@ -1,0 +1,57 @@
+{% extends 'authentication/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar">
+            <h5 class="text-center mb-4"><i class="fas fa-crown"></i> Super Admin</h5>
+            <a href="{% url 'super_admin_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{% url 'super_admin_pending' %}"><i class="fas fa-clock"></i> Pending</a>
+            <a href="{% url 'super_admin_roles' %}" class="active"><i class="fas fa-users-cog"></i> Roles</a>
+            <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+        
+        <div class="col-md-10 p-4">
+            <h2 class="mb-4">Manage User Roles</h2>
+            
+            <div class="card">
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Current Role</th>
+                                <th>Change Role</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.first_name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td><span class="badge bg-info">{{ user.get_role_display }}</span></td>
+                                <td>
+                                    <form method="POST" class="d-flex gap-2">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                                        <select name="role" class="form-select form-select-sm" style="width: 200px;">
+                                            {% for role, label in role_choices %}
+                                            <option value="{{ role }}" {% if user.role == role %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

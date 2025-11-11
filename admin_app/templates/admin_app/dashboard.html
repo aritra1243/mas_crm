@@ -1,0 +1,384 @@
+{% extends 'authentication/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-user-shield"></i> Admin</h5>
+      <a href="{% url 'admin_dashboard' %}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <div class="col-md-10 p-4">
+      <h2 class="mb-4">Admin Dashboard - Full Control Panel</h2>
+
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-3">{{ message }}</div>
+      {% endfor %}
+
+      <!-- Stats -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+              <h3>{{ total_jobs }}</h3>
+              <p>Total Jobs</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-success text-white">
+            <div class="card-body text-center">
+              <h3>{{ marketing_count }}</h3>
+              <p>Marketing Agents</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-info text-white">
+            <div class="card-body text-center">
+              <h3>{{ writer_count }}</h3>
+              <p>Writers</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+              <h3>{{ allocater_count }}</h3>
+              <p>Allocaters</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <ul class="nav nav-tabs" id="adminTab" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" data-bs-toggle="tab" href="#jobs"><i class="fas fa-briefcase"></i> Jobs Management</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-bs-toggle="tab" href="#marketing"><i class="fas fa-bullhorn"></i> Marketing Agents</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-bs-toggle="tab" href="#allocatersTab"><i class="fas fa-tasks"></i> Allocaters</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-bs-toggle="tab" href="#writersTab"><i class="fas fa-pen"></i> Writers</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-bs-toggle="tab" href="#processTab"><i class="fas fa-cogs"></i> Process Team</a>
+        </li>
+      </ul>
+
+      <div class="tab-content mt-4">
+        <!-- Jobs -->
+        <div class="tab-pane fade show active" id="jobs">
+          <div class="card">
+            <div class="card-header"><h5>All Jobs</h5></div>
+            <div class="card-body">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Job ID</th>
+                    <th>Topic</th>
+                    <th>Created By</th>
+                    <th>Allocated To</th>
+                    <th>Status</th>
+                    <th>Deadline</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for job in jobs %}
+                  <tr>
+                    <td><strong>{{ job.job_id }}</strong></td>
+                    <td>{{ job.topic|default:"Not specified"|truncatewords:8 }}</td>
+                    <td>{{ job.created_by.first_name }}</td>
+                    <td>{{ job.allocated_to.first_name|default:"Not assigned" }}</td>
+                    <td><span class="badge bg-{{ job.status }}">{{ job.get_status_display }}</span></td>
+                    <td>{{ job.strict_deadline|date:"d M Y" }}</td>
+                    <td>
+                      <button
+                        class="btn btn-sm btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#jobEditModal"
+                        data-job-id="{{ job.id }}"
+                        data-job-label="{{ job.job_id }}"
+                        data-current-writer="{{ job.allocated_to.id|default:'' }}"
+                        data-current-status="{{ job.status }}"
+                      >
+                        <i class="fas fa-edit"></i> Edit
+                      </button>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="7" class="text-center">No jobs available</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Marketing Agents -->
+        <div class="tab-pane fade" id="marketing">
+          <div class="card">
+            <div class="card-header bg-success text-white"><h5>Marketing Agents</h5></div>
+            <div class="card-body">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr><th>Name</th><th>Email</th><th>Phone</th><th>Jobs Created</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                  {% for u in marketing_agents %}
+                  <tr>
+                    <td>{{ u.first_name|default:u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.phone_number }}</td>
+                    <td><span class="badge bg-info">{{ u.created_jobs.count }}</span></td>
+                    <td><span class="badge bg-success">Active</span></td>
+                    <td>
+                      <button
+                        class="btn btn-sm btn-outline-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#userViewModal"
+                        data-name="{{ u.first_name|default:u.username }}"
+                        data-email="{{ u.email }}"
+                        data-phone="{{ u.phone_number }}"
+                        data-role="Marketing"
+                      ><i class="fas fa-eye"></i> View</button>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="6" class="text-center">No marketing agents</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Allocaters -->
+        <div class="tab-pane fade" id="allocatersTab">
+          <div class="card">
+            <div class="card-header bg-warning text-white"><h5>Allocaters</h5></div>
+            <div class="card-body">
+              <table class="table table-hover align-middle">
+                <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  {% for u in allocaters %}
+                  <tr>
+                    <td>{{ u.first_name|default:u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.phone_number }}</td>
+                    <td><span class="badge bg-success">Active</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-primary"
+                              data-bs-toggle="modal"
+                              data-bs-target="#userViewModal"
+                              data-name="{{ u.first_name|default:u.username }}"
+                              data-email="{{ u.email }}"
+                              data-phone="{{ u.phone_number }}"
+                              data-role="Allocater">
+                        <i class="fas fa-eye"></i> View
+                      </button>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="5" class="text-center">No allocaters</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Writers -->
+        <div class="tab-pane fade" id="writersTab">
+          <div class="card">
+            <div class="card-header bg-info text-white"><h5>Writers</h5></div>
+            <div class="card-body">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr><th>Name</th><th>Email</th><th>Phone</th><th>Jobs Allocated</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                  {% for u in writers %}
+                  <tr>
+                    <td>{{ u.first_name|default:u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.phone_number }}</td>
+                    <td><span class="badge bg-warning">{{ u.allocated_jobs.count }}</span></td>
+                    <td><span class="badge bg-success">Active</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-primary"
+                              data-bs-toggle="modal"
+                              data-bs-target="#userViewModal"
+                              data-name="{{ u.first_name|default:u.username }}"
+                              data-email="{{ u.email }}"
+                              data-phone="{{ u.phone_number }}"
+                              data-role="Writer">
+                        <i class="fas fa-eye"></i> View
+                      </button>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="6" class="text-center">No writers</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Process Team -->
+        <div class="tab-pane fade" id="processTab">
+          <div class="card">
+            <div class="card-header" style="background:#667eea;color:white;"><h5>Process Team</h5></div>
+            <div class="card-body">
+              <table class="table table-hover align-middle">
+                <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  {% for u in process_team %}
+                  <tr>
+                    <td>{{ u.first_name|default:u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.phone_number }}</td>
+                    <td><span class="badge bg-success">Active</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-primary"
+                              data-bs-toggle="modal"
+                              data-bs-target="#userViewModal"
+                              data-name="{{ u.first_name|default:u.username }}"
+                              data-email="{{ u.email }}"
+                              data-phone="{{ u.phone_number }}"
+                              data-role="Process Team">
+                        <i class="fas fa-eye"></i> View
+                      </button>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="5" class="text-center">No process team members</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reusable Job Edit Modal -->
+<div class="modal fade" id="jobEditModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Job: <span class="job-label"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="hidden" name="job_id" value="">
+          <div class="mb-3">
+            <label class="form-label">Action</label>
+            <select name="action" class="form-select">
+              <option value="allocate">Allocate to Writer</option>
+              <option value="query">Query</option>
+              <option value="cancel">Cancel</option>
+              <option value="hold">Hold</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Writer</label>
+            <select name="writer_id" class="form-select">
+              <option value="">Choose…</option>
+              {% for w in writers %}
+                <option value="{{ w.id }}">{{ w.first_name|default:w.username }}</option>
+              {% endfor %}
+            </select>
+            <small class="text-muted">Required only when action is Allocate.</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Note (optional)</label>
+            <textarea name="status_note" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit">Save</button>
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Reusable User View Modal -->
+<div class="modal fade" id="userViewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><span class="user-role">User</span> details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th>Name:</th><td class="u-name"></td></tr>
+          <tr><th>Email:</th><td class="u-email"></td></tr>
+          <tr><th>Phone:</th><td class="u-phone"></td></tr>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Wire up Job Edit modal
+  document.addEventListener('DOMContentLoaded', function () {
+    var jobModal = document.getElementById('jobEditModal');
+    jobModal.addEventListener('show.bs.modal', function (event) {
+      var btn = event.relatedTarget;
+      var jobId = btn.getAttribute('data-job-id');
+      var jobLabel = btn.getAttribute('data-job-label');
+      var currentWriter = btn.getAttribute('data-current-writer') || '';
+      var currentStatus = btn.getAttribute('data-current-status') || '';
+
+      jobModal.querySelector('input[name="job_id"]').value = jobId;
+      jobModal.querySelector('.job-label').textContent = jobLabel;
+
+      // set current status in action select
+      var actionSel = jobModal.querySelector('select[name="action"]');
+      if (currentStatus) {
+        for (const opt of actionSel.options) {
+          opt.selected = (opt.value === currentStatus);
+        }
+      }
+
+      // set current writer
+      var writerSel = jobModal.querySelector('select[name="writer_id"]');
+      for (const opt of writerSel.options) {
+        opt.selected = (opt.value === currentWriter);
+      }
+    });
+
+    // Wire up User View modal
+    var userModal = document.getElementById('userViewModal');
+    userModal.addEventListener('show.bs.modal', function (event) {
+      var btn = event.relatedTarget;
+      userModal.querySelector('.user-role').textContent = btn.getAttribute('data-role') || 'User';
+      userModal.querySelector('.u-name').textContent  = btn.getAttribute('data-name') || '';
+      userModal.querySelector('.u-email').textContent = btn.getAttribute('data-email') || '';
+      userModal.querySelector('.u-phone').textContent = btn.getAttribute('data-phone') || '';
+    });
+  });
+</script>
+{% endblock %}

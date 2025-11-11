@@ -1,0 +1,156 @@
+{% extends 'authentication/base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-tasks"></i> Allocater</h5>
+      <a href="{% url 'allocater_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="{% url 'allocater_notifications' %}"><i class="fas fa-bell"></i> Notifications</a>
+      <a href="{% url 'allocater_profile' %}" class="active"><i class="fas fa-user"></i> Profile</a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+    <!-- Main Content -->
+    <div class="col-md-10 p-4">
+      <h2 class="mb-4">My Profile</h2>
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card text-center mb-4">
+            <div class="card-body">
+              {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+              {% else %}
+                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 150px; height: 150px; font-size: 60px;">
+                  {{ user.username|first|upper }}
+                </div>
+              {% endif %}
+              <h4>{{ user.first_name|default:user.username }}</h4>
+              <p class="text-muted">{{ user.role|title }}</p>
+              <p class="text-muted"><i class="fas fa-envelope"></i> {{ user.email }}</p>
+              {% if user.phone_number %}
+                <p class="text-muted"><i class="fas fa-phone"></i> {{ user.phone_number }}</p>
+              {% endif %}
+            </div>
+          </div>
+          <!-- Additional Info Card -->
+          <div class="card">
+            <div class="card-header bg-info text-white">
+              <h6 class="mb-0"><i class="fas fa-info-circle"></i> Additional Information</h6>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <strong>Username:</strong>
+                <p class="mb-0">{{ user.username }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <strong>Used ID:</strong>
+                <p class="mb-0">{{ user.used_id|default:"Not set" }}</p>
+                <small class="text-muted">(assigned by Admin)</small>
+              </div>
+              
+              <div class="mb-3">
+                <strong>Organization ID:</strong>
+                <p class="mb-0">{{ user.organization_id|default:"Not set" }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <strong>Joining Date:</strong>
+                <p class="mb-0">{{ user.date_joined|date:"d M Y, h:i A" }}</p>
+              </div>
+              
+              <div class="mb-0">
+                <strong>Tenure:</strong>
+                <p class="mb-0">{{ tenure }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0"><i class="fas fa-user-circle"></i> Profile Details</h5>
+            </div>
+            <div class="card-body">
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <h6 class="text-muted mb-2">First Name</h6>
+                  <p class="fs-5">{{ user.first_name|default:"Not set" }}</p>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-muted mb-2">Last Name</h6>
+                  <p class="fs-5">{{ user.last_name|default:"Not set" }}</p>
+                </div>
+              </div>
+              
+              <div class="mb-4">
+                <h6 class="text-muted mb-2">Username</h6>
+                <p class="fs-5">{{ user.username }}</p>
+              </div>
+              
+              <div class="mb-4">
+                <h6 class="text-muted mb-2">Email</h6>
+                <p class="fs-5">{{ user.email }}</p>
+              </div>
+              
+              <div class="mb-4">
+                <h6 class="text-muted mb-2">Phone Number</h6>
+                <p class="fs-5">{{ user.phone_number|default:"Not set" }}</p>
+              </div>
+              
+              <div class="mb-4">
+                <h6 class="text-muted mb-2">Role</h6>
+                <p class="fs-5">{{ user.role|title }}</p>
+              </div>
+              
+              <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle"></i> Profile information is managed by your administrator. Contact them if you need to update any details.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  .sidebar {
+    background-color: #2c3e50;
+    min-height: 100vh;
+    padding: 20px 0;
+  }
+  
+  .sidebar a {
+    color: #ecf0f1;
+    text-decoration: none;
+    padding: 15px 20px;
+    display: block;
+    transition: background-color 0.3s;
+  }
+  
+  .sidebar a:hover, .sidebar a.active {
+    background-color: #34495e;
+  }
+  
+  .card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  h6.text-muted {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .fs-5 {
+    font-weight: 500;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'authentication/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-pen"></i> Writer</h5>
+      <a href="{% url 'writer_home' %}" class="{% if request.resolver_match.url_name == 'writer_home' %}active{% endif %}">
+        <i class="fas fa-home"></i> Home
+      </a>
+      <a href="{% url 'writer_dashboard' %}" class="{% if request.resolver_match.url_name == 'writer_dashboard' %}active{% endif %}">
+        <i class="fas fa-tachometer-alt"></i> Workboard
+      </a>
+      <a href="{% url 'writer_notifications' %}" class="{% if request.resolver_match.url_name == 'writer_notifications' %}active{% endif %}">
+        <i class="fas fa-bell"></i> Notifications
+        {% if unread_count > 0 %}
+        <span class="badge bg-danger rounded-pill ms-2">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{% url 'writer_profile' %}" class="{% if request.resolver_match.url_name == 'writer_profile' %}active{% endif %}">
+        <i class="fas fa-user"></i> Profile
+      </a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <div class="col-md-10 p-4">
+      <h3 class="mb-4"><i class="fas fa-user"></i> Profile</h3>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <p><strong>Email:</strong> {{ email }}</p>
+              <p><strong>Username:</strong> {{ username }}</p>
+              <p><strong>Used ID (assigned by Admin):</strong>
+                {% if external_user_id %}{{ external_user_id }}{% else %}<span class="text-muted">Not set</span>{% endif %}
+              </p>
+              <p><strong>Organization ID:</strong>
+                {% if org_id %}{{ org_id }}{% else %}<span class="text-muted">Not set</span>{% endif %}
+              </p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Joining date:</strong>
+                {% if date_joined %}{{ date_joined|date:"d M Y, h:i A" }}{% else %}<span class="text-muted">Unknown</span>{% endif %}
+              </p>
+              <p><strong>Tenure:</strong>
+                {{ tenure.years }} year(s), {{ tenure.months }} month(s), {{ tenure.days }} day(s)
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

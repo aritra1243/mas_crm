@@ -1,0 +1,447 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Manager Dashboard - Dissertation Assist Box{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 sidebar">
+            <h5 class="text-center mb-4"><i class="fas fa-user-tie"></i> Manager</h5>
+            <a href="{% url 'manager_dashboard' %}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-10 p-4">
+            <h2 class="mb-4">Manager Dashboard - Control Panel</h2>
+            
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h3>{{ total_jobs }}</h3>
+                            <p>Total Jobs</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h3>{{ marketing_count }}</h3>
+                            <p>Marketing Agents</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h3>{{ writer_count }}</h3>
+                            <p>Writers</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h3>{{ allocater_count }}</h3>
+                            <p>Allocaters</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tabs for Different Sections -->
+            <ul class="nav nav-tabs" id="managerTab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#jobs">
+                        <i class="fas fa-briefcase"></i> Jobs Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#marketing">
+                        <i class="fas fa-bullhorn"></i> Marketing Agents
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#allocatersTab">
+                        <i class="fas fa-tasks"></i> Allocaters
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#writersTab">
+                        <i class="fas fa-pen"></i> Writers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#processTab">
+                        <i class="fas fa-cogs"></i> Process Team
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="tab-content mt-4">
+                <!-- Jobs Tab -->
+                <div class="tab-pane fade show active" id="jobs">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>All Jobs ({{ total_jobs }})</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Job ID</th>
+                                            <th>Topic</th>
+                                            <th>Created By</th>
+                                            <th>Allocated To</th>
+                                            <th>Status</th>
+                                            <th>Word Count</th>
+                                            <th>Deadline</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for job in jobs %}
+                                        <tr>
+                                            <td><strong>{{ job.job_id }}</strong></td>
+                                            <td>{{ job.topic|truncatewords:8|default:"No topic" }}</td>
+                                            <td>{{ job.created_by.first_name }}</td>
+                                            <td>{{ job.allocated_to.first_name|default:"Not assigned" }}</td>
+                                            <td>
+                                                {% if job.status == 'drop' %}
+                                                <span class="badge bg-secondary">{{ job.get_status_display }}</span>
+                                                {% elif job.status == 'allocated' %}
+                                                <span class="badge bg-primary">{{ job.get_status_display }}</span>
+                                                {% elif job.status == 'process' %}
+                                                <span class="badge bg-info">{{ job.get_status_display }}</span>
+                                                {% elif job.status == 'completed' %}
+                                                <span class="badge bg-success">{{ job.get_status_display }}</span>
+                                                {% else %}
+                                                <span class="badge bg-warning">{{ job.get_status_display }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td><span class="badge bg-info">{{ job.word_count }}</span></td>
+                                            <td>{{ job.strict_deadline|date:"d M Y" }}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editJob{{ job.id }}" type="button">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewJob{{ job.id }}" type="button">
+                                                    <i class="fas fa-eye"></i> View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="8" class="text-center">No jobs available</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Marketing Agents Tab -->
+                <div class="tab-pane fade" id="marketing">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5>Marketing Agents ({{ marketing_count }})</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for agent in marketing_agents %}
+                                    <tr>
+                                        <td>{{ agent.first_name }}</td>
+                                        <td>{{ agent.email }}</td>
+                                        <td>{{ agent.phone_number }}</td>
+                                        <td>
+                                            {% if agent.is_approved %}
+                                            <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No marketing agents</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Allocaters Tab -->
+                <div class="tab-pane fade" id="allocatersTab">
+                    <div class="card">
+                        <div class="card-header bg-warning text-white">
+                            <h5>Allocaters ({{ allocater_count }})</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for allocater in allocaters %}
+                                    <tr>
+                                        <td>{{ allocater.first_name }}</td>
+                                        <td>{{ allocater.email }}</td>
+                                        <td>{{ allocater.phone_number }}</td>
+                                        <td>
+                                            {% if allocater.is_approved %}
+                                            <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No allocaters</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Writers Tab -->
+                <div class="tab-pane fade" id="writersTab">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5>Writers ({{ writer_count }})</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for writer in writers %}
+                                    <tr>
+                                        <td>{{ writer.first_name }}</td>
+                                        <td>{{ writer.email }}</td>
+                                        <td>{{ writer.phone_number }}</td>
+                                        <td>
+                                            {% if writer.is_approved %}
+                                            <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No writers</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Process Team Tab -->
+                <div class="tab-pane fade" id="processTab">
+                    <div class="card">
+                        <div class="card-header" style="background: #667eea; color: white;">
+                            <h5>Process Team ({{ process_team_count }})</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for member in process_team %}
+                                    <tr>
+                                        <td>{{ member.first_name }}</td>
+                                        <td>{{ member.email }}</td>
+                                        <td>{{ member.phone_number }}</td>
+                                        <td>
+                                            {% if member.is_approved %}
+                                            <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No process team members</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Job Modals (Outside the table loop for better performance) -->
+{% for job in jobs %}
+<!-- Edit Job Modal -->
+<div class="modal fade" id="editJob{{ job.id }}" tabindex="-1" aria-labelledby="editJobLabel{{ job.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editJobLabel{{ job.id }}">Edit Job: {{ job.job_id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'manager_dashboard' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="job_id" value="{{ job.id }}">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Allocate to Writer</label>
+                        <select name="writer_id" class="form-select">
+                            <option value="">Choose writer...</option>
+                            {% for writer in writers %}
+                            <option value="{{ writer.id }}" {% if job.allocated_to and job.allocated_to.id == writer.id %}selected{% endif %}>
+                                {{ writer.first_name }} {{ writer.last_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Change Status</label>
+                        <select name="action" class="form-select" required>
+                            <option value="allocate">Allocate to Writer</option>
+                            <option value="query">Query</option>
+                            <option value="cancel">Cancel</option>
+                            <option value="hold">Hold</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Note (Optional)</label>
+                        <textarea name="status_note" class="form-control" rows="3">{{ job.status_note }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Job Modal -->
+<div class="modal fade" id="viewJob{{ job.id }}" tabindex="-1" aria-labelledby="viewJobLabel{{ job.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewJobLabel{{ job.id }}">Job Details: {{ job.job_id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Topic:</strong> {{ job.topic|default:"Not specified" }}</p>
+                        <p><strong>Word Count:</strong> {{ job.word_count }}</p>
+                        <p><strong>Referencing:</strong> {{ job.referencing_style|default:"Not specified" }}</p>
+                        <p><strong>Writing Style:</strong> {{ job.writing_style|default:"Not specified" }}</p>
+                        <p><strong>Deadline:</strong> {{ job.strict_deadline|date:"d M Y, h:i A" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Created By:</strong> {{ job.created_by.first_name }} {{ job.created_by.last_name }}</p>
+                        <p><strong>Allocated To:</strong> {{ job.allocated_to.first_name|default:"Not assigned" }}</p>
+                        <p><strong>Status:</strong> <span class="badge 
+                            {% if job.status == 'drop' %}bg-secondary
+                            {% elif job.status == 'allocated' %}bg-primary
+                            {% elif job.status == 'process' %}bg-info
+                            {% elif job.status == 'completed' %}bg-success
+                            {% else %}bg-warning{% endif %}">
+                            {{ job.get_status_display }}
+                        </span></p>
+                        <p><strong>Value:</strong> ${{ job.value }}</p>
+                        <p><strong>Created:</strong> {{ job.created_at|date:"d M Y, h:i A" }}</p>
+                    </div>
+                </div>
+                <hr>
+                <h6><strong>Instructions:</strong></h6>
+                <div class="p-3 bg-light rounded">
+                    {{ job.instruction|linebreaks|default:"No instructions provided" }}
+                </div>
+                {% if job.status_note %}
+                <hr>
+                <h6><strong>Status Note:</strong></h6>
+                <div class="p-3 bg-light rounded">
+                    {{ job.status_note|linebreaks }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<style>
+/* Prevent modal flickering */
+.modal {
+    display: none;
+}
+
+.modal.show {
+    display: block;
+}
+
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Smooth transitions */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+}
+
+/* Fix any layout shift issues */
+body.modal-open {
+    overflow: hidden;
+    padding-right: 0 !important;
+}
+</style>
+
+{% endblock %}

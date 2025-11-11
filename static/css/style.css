@@ -1,0 +1,40 @@
+/* Additional Custom Styles */
+.sidebar a.active {
+    background: #3498db;
+    border-left: 4px solid #fff;
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.badge {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.table th {
+    background: #f8f9fa;
+    font-weight: 600;
+}
+
+.modal-header {
+    border-bottom: 3px solid #f0f0f0;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}

@@ -1,0 +1,77 @@
+{% extends 'authentication/base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-2 sidebar">
+      <h5 class="text-center mb-4"><i class="fas fa-bullhorn"></i> Marketing</h5>
+      <a href="{% url 'marketing_dashboard' %}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="{% url 'marketing_job_drop' %}"><i class="fas fa-plus-circle"></i> Job Drop</a>
+      <a href="{% url 'marketing_my_dropped' %}"><i class="fas fa-list"></i> My Dropped Jobs</a>
+      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <div class="col-md-10 p-4">
+      <h2 class="mb-4">Marketing Agent Dashboard</h2>
+
+      <div class="row mb-4">
+        <div class="col-md-2"><div class="card bg-primary text-white"><div class="card-body"><h3>{{ total_jobs }}</h3><p>Total Jobs</p></div></div></div>
+        <div class="col-md-2"><div class="card bg-warning text-white"><div class="card-body"><h3>{{ dropped }}</h3><p>Dropped</p></div></div></div>
+        <div class="col-md-2"><div class="card bg-info text-white"><div class="card-body"><h3>{{ allocated }}</h3><p>Total Allocated</p></div></div></div>
+        <div class="col-md-2"><div class="card bg-secondary text-white"><div class="card-body"><h3>{{ hold }}</h3><p>Hold</p></div></div></div>
+        <div class="col-md-2"><div class="card bg-success text-white"><div class="card-body"><h3>{{ completed }}</h3><p>Completed</p></div></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>My Jobs</h5>
+          <div>
+            <a href="{% url 'marketing_my_dropped' %}" class="btn btn-outline-secondary btn-sm">View Dropped</a>
+            <a href="{% url 'marketing_job_drop' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Create New Job</a>
+          </div>
+        </div>
+        <div class="card-body">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Job ID</th>
+                <th>Topic</th>
+                <th>Word Count</th>
+                <th>Expected Deadline</th>
+                <th>Status</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in jobs %}
+              <tr>
+                <td>{{ job.job_id }}</td>
+                <td>{{ job.topic|truncatewords:10 }}</td>
+                <td>{{ job.word_count }}</td>
+                <td>{{ job.expected_deadline|date:"d M Y, H:i" }}</td>
+                <td>
+                  {% if job.status == 'drop' %}
+                    <span class="badge bg-warning">Dropped</span>
+                  {% elif job.status == 'allocated' %}
+                    <span class="badge bg-info">Allocated</span>
+                  {% elif job.status == 'hold' %}
+                    <span class="badge bg-secondary">Hold</span>
+                  {% elif job.status == 'completed' %}
+                    <span class="badge bg-success">Completed</span>
+                  {% else %}
+                    <span class="badge bg-light text-dark">{{ job.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td>${{ job.value }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center">No jobs created yet</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
