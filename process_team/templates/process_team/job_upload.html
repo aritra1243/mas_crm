@@ -1,75 +1,518 @@
 {% extends 'authentication/base.html' %}
+
 {% block content %}
-<div class="container py-4">
-  <h3>Upload Artifacts — {{ job.get_masked_job_id }}</h3>
-  <p class="text-muted mb-4">{{ job.topic }}</p>
+<div class="container-fluid pt-3 pb-5 process-bg">
+  <div class="row g-0">
 
-  <div class="row">
-    <!-- AI/Plag section -->
-    <div class="col-md-6 mb-4">
-      <div class="card">
-        <div class="card-header">AI / Plagiarism Stage</div>
-        <div class="card-body">
-          <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="hidden" name="upload_type" value="ai_plag">
-            <div class="mb-3">
-              <label class="form-label">Final File (Writer)</label>
-              <input type="file" name="final_file" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">AI Report</label>
-              <input type="file" name="ai_report" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Plagiarism Report</label>
-              <input type="file" name="plag_report" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Software Evidence</label>
-              <input type="file" name="software" class="form-control">
-            </div>
-            <button type="submit" class="btn btn-primary">Save AI/Plag Files</button>
-          </form>
-        </div>
-      </div>
-    </div>
+    <!-- Sidebar -->
+    <aside class="col-md-2 sidebar pe-0">
+      <div class="sidebar-inner">
+        <h5 class="text-center mb-4 text-white-50">
+          <i class="fas fa-cogs me-2"></i>Process Team
+        </h5>
 
-    <!-- Decoration section -->
-    <div class="col-md-6 mb-4">
-      <div class="card">
-        <div class="card-header">Decoration and Finalisation</div>
-        <div class="card-body">
-          <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="hidden" name="upload_type" value="decoration">
-            <div class="mb-3">
-              <label class="form-label">Final Deliverable</label>
-              <input type="file" name="final_file" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">AI Report</label>
-              <input type="file" name="ai_report" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Plagiarism Report</label>
-              <input type="file" name="plag_report" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Software Evidence</label>
-              <input type="file" name="software" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Decorated File (optional)</label>
-              <input type="file" name="decorated_file" class="form-control">
-            </div>
-            <button type="submit" class="btn btn-success">Upload and Complete</button>
-          </form>
-        </div>
+        <a href="{% url 'process_team_dashboard' %}">
+          <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+        </a>
+        <a href="{% url 'process_team_notifications' %}">
+          <i class="fas fa-bell me-2"></i>Notifications
+          {% if process_unread_count %}
+            <span class="badge rounded-pill bg-danger float-end">{{ process_unread_count }}</span>
+          {% endif %}
+        </a>
+        <a href="{% url 'process_team_profile' %}">
+          <i class="fas fa-user me-2"></i>Profile
+        </a>
+        <a href="{% url 'logout' %}">
+          <i class="fas fa-sign-out-alt me-2"></i>Logout
+        </a>
       </div>
-    </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="col-md-10 p-4">
+      {% if is_decoration_assignment %}
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+          <div>
+            <h2 class="mb-1">
+              <i class="fas fa-magic me-2"></i>Decoration Work - {{ job.get_masked_job_id }}
+            </h2>
+            <p class="text-muted mb-0">{{ job.topic|default:"No topic provided" }}</p>
+          </div>
+          <a href="{% url 'process_team_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+          </a>
+        </div>
+
+        <div class="alert alert-info d-flex align-items-center">
+          <i class="fas fa-info-circle me-2"></i>
+          <div>
+            Decoration Task: this job has been assigned to you for final decoration and formatting. Review all files and submit the finalized version below.
+          </div>
+        </div>
+
+        <!-- Job Details -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Job Details</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <p><strong>Topic:</strong> {{ job.topic|default:"Not specified" }}</p>
+                <p><strong>Word Count:</strong> <span class="badge bg-info">{{ job.word_count|default:"-" }}</span></p>
+                <p><strong>Referencing:</strong> {{ job.referencing_style|default:"Not specified" }}</p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Writing Style:</strong> {{ job.writing_style|default:"Not specified" }}</p>
+                <p>
+                  <strong>Strict Deadline:</strong>
+                  {% if job.strict_deadline %}
+                    <span class="badge bg-danger">{{ job.strict_deadline|date:"d M Y, h:i A" }}</span>
+                  {% else %}
+                    <span class="text-muted">No strict deadline recorded</span>
+                  {% endif %}
+                </p>
+                <p><strong>Job Value:</strong> <span class="badge bg-success">${{ job.value|default:"0.00" }}</span></p>
+              </div>
+              <div class="col-12">
+                <strong>Instructions:</strong>
+                <div class="p-3 bg-light rounded mt-2">
+                  {{ job.instruction|linebreaks|default:"No additional instructions supplied." }}
+                </div>
+              </div>
+              {% if job.decoration_note %}
+                <div class="col-12">
+                  <strong>Decoration Note:</strong>
+                  <div class="p-3 bg-warning bg-opacity-10 border border-warning rounded mt-2">
+                    {{ job.decoration_note|linebreaks }}
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Previously Uploaded Files -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="fas fa-folder-open me-2"></i>Previously Uploaded Files</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-4">
+              <div class="col-lg-6">
+                <h6 class="text-uppercase small fw-bold text-muted mb-2">Writer's Original Files</h6>
+                <div class="d-flex flex-column gap-2">
+                  {% if job.final_copy %}
+                    <a href="{{ job.final_copy.url }}" target="_blank" class="btn btn-sm btn-outline-success text-start">
+                      <i class="fas fa-file-word me-2"></i>Final Copy
+                    </a>
+                  {% endif %}
+                  {% if job.structure_file %}
+                    <a href="{{ job.structure_file.url }}" target="_blank" class="btn btn-sm btn-outline-info text-start">
+                      <i class="fas fa-sitemap me-2"></i>Structure File
+                    </a>
+                  {% endif %}
+                  {% if job.attachment %}
+                    <a href="{{ job.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-secondary text-start">
+                      <i class="fas fa-paperclip me-2"></i>Brief / Attachment
+                    </a>
+                  {% endif %}
+                  {% if job.software_files %}
+                    <a href="{{ job.software_files.url }}" target="_blank" class="btn btn-sm btn-outline-dark text-start">
+                      <i class="fas fa-folder-open me-2"></i>Software Files
+                    </a>
+                  {% endif %}
+                  {% if not job.final_copy and not job.structure_file and not job.attachment and not job.software_files %}
+                    <span class="text-muted">No uploads from writer.</span>
+                  {% endif %}
+                </div>
+                {% if job.final_copy_summary %}
+                  <div class="mt-3">
+                    <strong>Writer Summary:</strong>
+                    <div class="p-3 bg-light border rounded mt-2">
+                      {{ job.final_copy_summary|linebreaks }}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="col-lg-6">
+                <h6 class="text-uppercase small fw-bold text-muted mb-2">Process Team Files</h6>
+                <div class="d-flex flex-column gap-2">
+                  {% if job.ai_plag_final_file %}
+                    <a href="{{ job.ai_plag_final_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary text-start">
+                      <i class="fas fa-file-alt me-2"></i>Processed Final
+                    </a>
+                  {% endif %}
+                  {% if job.ai_plag_ai_report %}
+                    <a href="{{ job.ai_plag_ai_report.url }}" target="_blank" class="btn btn-sm btn-outline-info text-start">
+                      <i class="fas fa-robot me-2"></i>AI Report
+                    </a>
+                  {% endif %}
+                  {% if job.ai_plag_plag_report %}
+                    <a href="{{ job.ai_plag_plag_report.url }}" target="_blank" class="btn btn-sm btn-outline-warning text-start">
+                      <i class="fas fa-search me-2"></i>Plagiarism Report
+                    </a>
+                  {% endif %}
+                  {% if job.ai_plag_software %}
+                    <a href="{{ job.ai_plag_software.url }}" target="_blank" class="btn btn-sm btn-outline-dark text-start">
+                      <i class="fas fa-folder-plus me-2"></i>Software / Additional Files
+                    </a>
+                  {% endif %}
+                  {% if not job.ai_plag_final_file and not job.ai_plag_ai_report and not job.ai_plag_plag_report and not job.ai_plag_software %}
+                    <span class="text-muted">No files uploaded by process team yet.</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Decorated Work -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-cloud-upload-alt me-2"></i>Submit Decorated Work</h5>
+          </div>
+          <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="row g-3" id="decorationSubmissionForm">
+              {% csrf_token %}
+              <input type="hidden" name="upload_type" value="decoration">
+
+              <div class="col-md-6">
+                <label class="form-label">Final Decorated File <span class="text-danger">*</span></label>
+                <input type="file" name="decoration_final" class="form-control" required>
+                <small class="text-muted">The final decorated document ready for delivery.</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">AI Report</label>
+                <input type="file" name="decoration_ai_report" class="form-control">
+                <small class="text-muted">Updated AI detection report (if applicable).</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Plagiarism Report</label>
+                <input type="file" name="decoration_plag_report" class="form-control">
+                <small class="text-muted">Updated plagiarism report (if applicable).</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Software / Additional Files</label>
+                <input type="file" name="decoration_software" class="form-control" multiple>
+                <small class="text-muted">Upload up to 10 files; they will be packed into one archive.</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Alternative Decorated Version</label>
+                <input type="file" name="decoration_alternative" class="form-control">
+                <small class="text-muted">Optional alternative decorated format if needed.</small>
+              </div>
+
+              <div class="col-12">
+                <div class="alert alert-success mb-0">
+                  <i class="fas fa-check-circle me-2"></i>
+                  After submission, this job will be marked as Completed and will appear in the Allocater completed list.
+                </div>
+              </div>
+
+              <div class="col-12 d-flex gap-2 mt-2">
+                <button type="submit" class="btn btn-success">
+                  <i class="fas fa-paper-plane me-1"></i>Submit Decorated Work
+                </button>
+                <a href="{% url 'process_team_dashboard' %}" class="btn btn-outline-secondary">
+                  <i class="fas fa-times me-1"></i>Cancel
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      {% else %}
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+          <div>
+            <h3 class="mb-1">Upload Artifacts - {{ job.get_masked_job_id }}</h3>
+            <p class="text-muted mb-0">{{ job.topic|default:"No topic provided" }}</p>
+          </div>
+          <a href="{% url 'process_team_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+          </a>
+        </div>
+
+        <div class="alert alert-info d-flex align-items-center">
+          <i class="fas fa-info-circle me-2"></i>
+          <div>
+            Complete the AI/Plagiarism stage first, then upload the final decorated files. Both stages feed directly into the allocator workflow.
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+              <div class="card-header bg-white border-0">
+                <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Job Snapshot</h5>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <strong>Word Count:</strong>
+                  <div>{{ job.word_count|default:"-" }}</div>
+                </div>
+                <div class="mb-3">
+                  <strong>Referencing:</strong>
+                  <div>{{ job.referencing_style|default:"Not specified" }}</div>
+                </div>
+                <div class="mb-3">
+                  <strong>Writing Style:</strong>
+                  <div>{{ job.writing_style|default:"Not specified" }}</div>
+                </div>
+                <div class="mb-3">
+                  <strong>Strict Deadline:</strong>
+                  <div>
+                    {% if job.strict_deadline %}
+                      <span class="badge bg-danger-subtle text-danger border border-danger">
+                        {{ job.strict_deadline|date:"d M Y, h:i A" }}
+                      </span>
+                    {% else %}
+                      <span class="text-muted">No hard deadline</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <strong>Assigned Writer:</strong>
+                  <div>
+                    {% if job.allocated_to %}
+                      {{ job.allocated_to.first_name|default:job.allocated_to.username }}
+                    {% else %}
+                      <span class="text-muted">Unassigned</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="mb-0">
+                  <strong>Statuses:</strong>
+                  <div class="mt-1">
+                    <span class="badge bg-info-subtle text-info border border-info text-capitalize">
+                      {{ job.get_process_team_status_display }}
+                    </span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary text-capitalize ms-1">
+                      {{ job.get_decoration_status_display }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card shadow-sm">
+              <div class="card-header bg-white border-0">
+                <h5 class="mb-0"><i class="fas fa-file-upload me-2"></i>Writer Files</h5>
+              </div>
+              <div class="card-body">
+                <div class="d-flex flex-column gap-2">
+                  {% if job.attachment %}
+                    <a href="{{ job.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-secondary text-start">
+                      <i class="fas fa-paperclip me-2"></i>Brief / Original Attachment
+                    </a>
+                  {% endif %}
+                  {% if job.final_copy %}
+                    <a href="{{ job.final_copy.url }}" target="_blank" class="btn btn-sm btn-outline-success text-start">
+                      <i class="fas fa-file-word me-2"></i>Final Copy
+                    </a>
+                  {% endif %}
+                  {% if job.structure_file %}
+                    <a href="{{ job.structure_file.url }}" target="_blank" class="btn btn-sm btn-outline-info text-start">
+                      <i class="fas fa-file-alt me-2"></i>Structure File
+                    </a>
+                  {% endif %}
+                  {% if job.software_files %}
+                    <a href="{{ job.software_files.url }}" target="_blank" class="btn btn-sm btn-outline-dark text-start">
+                      <i class="fas fa-folder-open me-2"></i>Software / Supporting Files
+                    </a>
+                  {% endif %}
+                  {% if not job.attachment and not job.final_copy and not job.structure_file and not job.software_files %}
+                    <span class="text-muted">No uploads from writer.</span>
+                  {% endif %}
+                </div>
+                <hr>
+                <strong>Instructions</strong>
+                <div class="p-3 bg-light rounded mt-2">
+                  {{ job.instruction|linebreaks|default:"No instructions provided." }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+              <div class="card-header bg-white border-0">
+                <h5 class="mb-0"><i class="fas fa-robot me-2"></i>AI / Plagiarism Stage</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted">
+                  Upload the writer's final copy after running AI and plagiarism checks. This keeps the job within the decoration queue.
+                </p>
+                <form method="post" enctype="multipart/form-data" class="row g-3" id="aiPlagForm">
+                  {% csrf_token %}
+                  <input type="hidden" name="upload_type" value="ai_plag">
+                  <div class="col-md-6">
+                    <label class="form-label">Final File <span class="text-danger">*</span></label>
+                    <input type="file" name="final_file" class="form-control" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">AI Report</label>
+                    <input type="file" name="ai_report" class="form-control">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Plagiarism Report</label>
+                    <input type="file" name="plag_report" class="form-control">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Software / Additional Files</label>
+                    <input type="file" name="software" class="form-control" multiple>
+                    <small class="text-muted">Upload up to 10 files; they will be bundled automatically.</small>
+                  </div>
+                  <div class="col-12 d-flex gap-2 mt-2">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fas fa-upload me-1"></i>Upload AI / Plag Files
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="card shadow-sm">
+              <div class="card-header bg-white border-0">
+                <h5 class="mb-0"><i class="fas fa-cloud-upload-alt me-2"></i>Final Decoration Upload</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted">
+                  When the decoration stage is completed, upload the final deliverables below.
+                </p>
+                <form method="post" enctype="multipart/form-data" class="row g-3" id="finalDecorationForm">
+                  {% csrf_token %}
+                  <input type="hidden" name="upload_type" value="decoration">
+                  <div class="col-md-6">
+                    <label class="form-label">Final Decorated File <span class="text-danger">*</span></label>
+                    <input type="file" name="decoration_final" class="form-control" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">AI Report</label>
+                    <input type="file" name="decoration_ai_report" class="form-control">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Plagiarism Report</label>
+                    <input type="file" name="decoration_plag_report" class="form-control">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Software / Additional Files</label>
+                    <input type="file" name="decoration_software" class="form-control" multiple>
+                    <small class="text-muted">Upload up to 10 files; they will be packed into one archive.</small>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Alternative Decorated Version</label>
+                    <input type="file" name="decoration_alternative" class="form-control">
+                  </div>
+                  <div class="col-12">
+                    <div class="alert alert-warning mb-0">
+                      <i class="fas fa-exclamation-triangle me-2"></i>
+                      Final submission will notify the allocator. Double-check the files before uploading.
+                    </div>
+                  </div>
+                  <div class="col-12 d-flex gap-2 mt-2">
+                    <button type="submit" class="btn btn-success">
+                      <i class="fas fa-check-circle me-1"></i>Submit Final Files
+                    </button>
+                    <a href="{% url 'process_team_dashboard' %}" class="btn btn-outline-secondary">
+                      <i class="fas fa-times me-1"></i>Cancel
+                    </a>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </main>
   </div>
-
-  <a href="{% url 'process_team_dashboard' %}" class="btn btn-secondary">Back to dashboard</a>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var decorationForm = document.getElementById('decorationSubmissionForm');
+    if (decorationForm) {
+      decorationForm.addEventListener('submit', function (e) {
+        var fileInput = this.querySelector('input[name="decoration_final"]');
+        if (!fileInput || !fileInput.files.length) {
+          alert('Please attach the Final Decorated File before submitting.');
+          e.preventDefault();
+          return;
+        }
+        if (!confirm('Submit decorated work now? This will mark the job as completed.')) {
+          e.preventDefault();
+        }
+      });
+    }
+
+    var aiPlagForm = document.getElementById('aiPlagForm');
+    if (aiPlagForm) {
+      aiPlagForm.addEventListener('submit', function (e) {
+        var finalFile = this.querySelector('input[name="final_file"]');
+        if (!finalFile || !finalFile.files.length) {
+          alert('Please attach the Final File generated after AI/Plag review.');
+          e.preventDefault();
+        }
+      });
+    }
+
+    var finalForm = document.getElementById('finalDecorationForm');
+    if (finalForm) {
+      finalForm.addEventListener('submit', function (e) {
+        var decoratedFile = this.querySelector('input[name="decoration_final"]');
+        if (!decoratedFile || !decoratedFile.files.length) {
+          alert('Please attach the Final Decorated File.');
+          e.preventDefault();
+          return;
+        }
+        if (!confirm('Are you sure you want to submit these decoration files?')) {
+          e.preventDefault();
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  .sidebar {
+    background-color: #2c3e50;
+    min-height: 100vh;
+    padding: 20px 0;
+  }
+  .sidebar a {
+    color: #ecf0f1;
+    text-decoration: none;
+    padding: 12px 16px;
+    display: block;
+    transition: background-color 0.3s;
+  }
+  .sidebar a:hover,
+  .sidebar a.active {
+    background-color: #34495e;
+  }
+  .sidebar-inner {
+    position: sticky;
+    top: 0;
+  }
+  .card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+  .btn-purple {
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+    color: #fff;
+  }
+  .btn-purple:hover {
+    background-color: #59339d;
+    border-color: #59339d;
+  }
+  .process-bg {
+    background: linear-gradient(120deg, #f7f8fd 0%, #ffffff 100%);
+    min-height: 100vh;
+  }
+</style>
 {% endblock %}
